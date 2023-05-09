@@ -1,0 +1,12 @@
+version: "3"
+
+services:
+  app:
+    image: cities_bot
+    container_name: cities_bot_app
+    build:
+      context: ../.
+      dockerfile: ./build/Dockerfile
+    env_file:
+      - .env
+    command: /app/app
