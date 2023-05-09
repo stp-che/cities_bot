@@ -23,3 +23,11 @@ func getLogger() *zap.Logger {
 func Info(_ context.Context, msg string) {
 	getLogger().Info(msg)
 }
+
+func Warn(_ context.Context, msg string) {
+	getLogger().Warn(msg)
+}
+
+func Fatal(_ context.Context, msg string) {
+	getLogger().Fatal(msg)
+}
