@@ -5,46 +5,69 @@ import (
 	"fmt"
 	"os"
 
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
-
 	"github.com/stp-che/cities_bot/pkg/bot"
 	"github.com/stp-che/cities_bot/pkg/log"
+	"github.com/stp-che/cities_bot/service/gateway/telegram"
+	"github.com/stp-che/cities_bot/service/usecase/citiesgame"
 )
 
 func main() {
 	ctx := context.Background()
 	log.Info(ctx, "Cities Bot started")
 
-	bot, err := createBot()
+	app := NewApp()
+
+	err := app.Init()
 	if err != nil {
-		log.Fatal(ctx, fmt.Sprintf("bot init error: %s", err.Error()))
+		log.Fatal(ctx, fmt.Sprintf("app init error: %s", err.Error()))
 	}
 
-	addHandlers(bot)
-
-	bot.Run(ctx, 0)
+	app.Run(ctx)
 }
 
-func createBot() (*bot.Bot, error) {
-	cfg := bot.Config{
-		Token: os.Getenv("BOT_TOKEN"),
-		Debug: os.Getenv("BOT_DEBUG") == "true",
+type config struct {
+	bot bot.Config
+}
+
+type App struct {
+	cfg config
+	bot *bot.Bot
+
+	TgHandler *telegram.Service
+}
+
+func NewApp() *App {
+	return &App{
+		cfg: config{
+			bot: bot.Config{
+				Token: os.Getenv("BOT_TOKEN"),
+				Debug: os.Getenv("BOT_DEBUG") == "true",
+			},
+		},
+	}
+}
+
+func (a *App) Init() error {
+	var err error
+
+	a.bot, err = bot.New(a.cfg.bot)
+	if err != nil {
+		return fmt.Errorf("bot init error: %w", err)
 	}
 
-	return bot.New(cfg)
+	a.TgHandler = telegram.NewService([]telegram.Game{citiesgame.NewUsecase()})
+
+	a.addBotHandlers()
+
+	return nil
 }
 
-func addHandlers(b *bot.Bot) {
-	b.AddCommandHandler("play", func(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
-		resp := tgbotapi.NewMessage(msg.Chat.ID, "Game started")
+func (a *App) Run(ctx context.Context) {
+	a.bot.Run(ctx, 0)
+}
 
-		return &resp, nil
-	})
+func (a *App) addBotHandlers() {
+	a.bot.AddCommandHandler("play", a.TgHandler.Play)
 
-	b.SetDefaultHandler(func(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
-		resp := tgbotapi.NewMessage(msg.Chat.ID, msg.Text)
-		resp.ReplyToMessageID = msg.MessageID
-
-		return &resp, nil
-	})
+	a.bot.SetDefaultHandler(a.TgHandler.Default)
 }
