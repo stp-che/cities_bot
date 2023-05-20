@@ -10,6 +10,7 @@ type Game interface {
 	Name() string
 	Play(context.Context) (string, error)
 	ReceiveMessage(context.Context, string) (string, error)
+	Quit(context.Context) (string, error)
 }
 
 type Service struct {
@@ -37,6 +38,17 @@ func (s *Service) Play(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 
 func (s *Service) Default(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
 	res, err := s.getCurrentGame(ctx).ReceiveMessage(ctx, msg.Text)
+	if err != nil {
+		return nil, err
+	}
+
+	resp := tgbotapi.NewMessage(msg.Chat.ID, res)
+
+	return &resp, nil
+}
+
+func (s Service) Quit(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
+	res, err := s.getCurrentGame(ctx).Quit(ctx)
 	if err != nil {
 		return nil, err
 	}

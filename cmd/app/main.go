@@ -8,7 +8,10 @@ import (
 	"github.com/stp-che/cities_bot/pkg/bot"
 	"github.com/stp-che/cities_bot/pkg/log"
 	"github.com/stp-che/cities_bot/service/gateway/telegram"
+	sesstgmd "github.com/stp-che/cities_bot/service/gateway/telegram/middleware/session"
+	sessrepo "github.com/stp-che/cities_bot/service/repository/session"
 	"github.com/stp-che/cities_bot/service/usecase/citiesgame"
+	"github.com/stp-che/cities_bot/service/usecase/session"
 )
 
 func main() {
@@ -30,8 +33,9 @@ type config struct {
 }
 
 type App struct {
-	cfg config
-	bot *bot.Bot
+	cfg     config
+	bot     *bot.Bot
+	sessMgr *session.Manager
 
 	TgHandler *telegram.Service
 }
@@ -67,7 +71,22 @@ func (a *App) Run(ctx context.Context) {
 }
 
 func (a *App) addBotHandlers() {
-	a.bot.AddCommandHandler("play", a.TgHandler.Play)
+	withSession := sesstgmd.WithSession(a.sessionManager())
+	addCmdHandler := func(cmd string, h bot.HandlerFunc) {
+		a.bot.AddCommandHandler(cmd, withSession(h))
+	}
 
-	a.bot.SetDefaultHandler(a.TgHandler.Default)
+	addCmdHandler("play", a.TgHandler.Play)
+	addCmdHandler("quit", a.TgHandler.Quit)
+
+	a.bot.SetDefaultHandler(withSession(a.TgHandler.Default))
+}
+
+func (a *App) sessionManager() *session.Manager {
+	if a.sessMgr == nil {
+		repo := sessrepo.New()
+		a.sessMgr = session.NewManager(repo)
+	}
+
+	return a.sessMgr
 }
