@@ -2,19 +2,11 @@ package telegram
 
 import (
 	"context"
-	"errors"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/google/uuid"
 	esession "github.com/stp-che/cities_bot/service/entity/session"
 	"github.com/stp-che/cities_bot/service/usecase/session"
-)
-
-var (
-	ErrGameNameNotSpecified = errors.New("game name not specified")
-	ErrGameDoesNotExist     = errors.New("game does not exist")
-	ErrGameAlreadyStarted   = errors.New("game already started")
-	ErrGameNotStarted       = errors.New("game not started")
 )
 
 type Service struct {

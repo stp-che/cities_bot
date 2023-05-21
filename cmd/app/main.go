@@ -8,7 +8,7 @@ import (
 	"github.com/stp-che/cities_bot/pkg/bot"
 	"github.com/stp-che/cities_bot/pkg/log"
 	"github.com/stp-che/cities_bot/service/gateway/telegram"
-	sesstgmd "github.com/stp-che/cities_bot/service/gateway/telegram/middleware/session"
+	tgmd "github.com/stp-che/cities_bot/service/gateway/telegram/middleware"
 	sessrepo "github.com/stp-che/cities_bot/service/repository/session"
 	"github.com/stp-che/cities_bot/service/usecase/citiesgame"
 	"github.com/stp-che/cities_bot/service/usecase/session"
@@ -71,15 +71,22 @@ func (a *App) Run(ctx context.Context) {
 }
 
 func (a *App) addBotHandlers() {
-	withSession := sesstgmd.WithSession(a.sessionManager())
-	addCmdHandler := func(cmd string, h bot.HandlerFunc) {
-		a.bot.AddCommandHandler(cmd, withSession(h))
+	withSession := tgmd.WithSession(a.sessionManager())
+	handleErrors := tgmd.HandleErrors()
+	// addCmdHandler := func(cmd string, h bot.HandlerFunc) {
+	// 	a.bot.AddCommandHandler(cmd, withSession(h))
+	// }
+
+	m := func(h bot.HandlerFunc) bot.HandlerFunc {
+		return handleErrors(withSession(h))
 	}
 
-	addCmdHandler("play", a.TgHandler.Play)
-	addCmdHandler("quit", a.TgHandler.Quit)
+	// addCmdHandler("play", a.TgHandler.Play)
+	// addCmdHandler("quit", a.TgHandler.Quit)
+	a.bot.AddCommandHandler("play", m(a.TgHandler.Play))
+	a.bot.AddCommandHandler("quit", m(a.TgHandler.Quit))
 
-	a.bot.SetDefaultHandler(withSession(a.TgHandler.Default))
+	a.bot.SetDefaultHandler(m(a.TgHandler.Default))
 }
 
 func (a *App) sessionManager() *session.Manager {
