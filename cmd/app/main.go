@@ -73,16 +73,11 @@ func (a *App) Run(ctx context.Context) {
 func (a *App) addBotHandlers() {
 	withSession := tgmd.WithSession(a.sessionManager())
 	handleErrors := tgmd.HandleErrors()
-	// addCmdHandler := func(cmd string, h bot.HandlerFunc) {
-	// 	a.bot.AddCommandHandler(cmd, withSession(h))
-	// }
 
 	m := func(h bot.HandlerFunc) bot.HandlerFunc {
 		return handleErrors(withSession(h))
 	}
 
-	// addCmdHandler("play", a.TgHandler.Play)
-	// addCmdHandler("quit", a.TgHandler.Quit)
 	a.bot.AddCommandHandler("play", m(a.TgHandler.Play))
 	a.bot.AddCommandHandler("quit", m(a.TgHandler.Quit))
 
