@@ -4,7 +4,6 @@ import (
 	"context"
 
 	"github.com/google/uuid"
-	"github.com/stp-che/cities_bot/service/usecase/session"
 )
 
 const (
@@ -21,45 +20,16 @@ func (u *Usecase) Name() string {
 	return gameName
 }
 
-func (u *Usecase) Play(ctx context.Context) (string, error) {
-	s, err := session.GetFromContext(ctx)
-	if err != nil {
-		return "", err
-	}
+func (u *Usecase) Play(ctx context.Context) (*uuid.UUID, string, error) {
+	gameUUID := uuid.New()
 
-	if s.Game != nil {
-		return "You already have active game", nil
-	}
-
-	s.StartGame(u.Name(), uuid.New())
-
-	return "Game started", nil
+	return &gameUUID, "Game started", nil
 }
 
-func (u *Usecase) ReceiveMessage(ctx context.Context, message string) (string, error) {
-	s, err := session.GetFromContext(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	if s.Game == nil {
-		return "You have no current game", nil
-	}
-
+func (u *Usecase) ReceiveMessage(ctx context.Context, _ uuid.UUID, message string) (string, error) {
 	return message, nil
 }
 
-func (u *Usecase) Quit(ctx context.Context) (string, error) {
-	s, err := session.GetFromContext(ctx)
-	if err != nil {
-		return "", err
-	}
-
-	if s.Game == nil {
-		return "You have no current game", nil
-	}
-
-	s.QuitGame()
-
+func (u *Usecase) Quit(ctx context.Context, _ uuid.UUID) (string, error) {
 	return "Bye!", nil
 }

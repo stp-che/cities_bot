@@ -59,7 +59,7 @@ func (a *App) Init() error {
 		return fmt.Errorf("bot init error: %w", err)
 	}
 
-	a.TgHandler = telegram.NewService([]telegram.Game{citiesgame.NewUsecase()})
+	a.TgHandler = telegram.NewService([]telegram.GameEngine{citiesgame.NewUsecase()})
 
 	a.addBotHandlers()
 
