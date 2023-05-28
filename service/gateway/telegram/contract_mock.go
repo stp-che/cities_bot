@@ -81,12 +81,13 @@ func (mr *MockGameEngineMockRecorder) Quit(arg0, arg1 interface{}) *gomock.Call 
 }
 
 // ReceiveMessage mocks base method.
-func (m *MockGameEngine) ReceiveMessage(arg0 context.Context, arg1 uuid.UUID, arg2 string) (string, error) {
+func (m *MockGameEngine) ReceiveMessage(arg0 context.Context, arg1 uuid.UUID, arg2 string) (string, bool, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "ReceiveMessage", arg0, arg1, arg2)
 	ret0, _ := ret[0].(string)
-	ret1, _ := ret[1].(error)
-	return ret0, ret1
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
 }
 
 // ReceiveMessage indicates an expected call of ReceiveMessage.

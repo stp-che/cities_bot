@@ -28,6 +28,10 @@ func Warn(_ context.Context, msg string) {
 	getLogger().Warn(msg)
 }
 
+func Error(_ context.Context, msg string) {
+	getLogger().Error(msg)
+}
+
 func Fatal(_ context.Context, msg string) {
 	getLogger().Fatal(msg)
 }

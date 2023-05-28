@@ -51,7 +51,7 @@ func (s *Service) Play(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 func (s *Service) Default(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
 	return s.withCurrentGame(ctx,
 		func(sess *esession.Session, engine GameEngine, gameUUID uuid.UUID) (*tgbotapi.MessageConfig, error) {
-			res, err := engine.ReceiveMessage(ctx, sess.Game.UUID, msg.Text)
+			res, _, err := engine.ReceiveMessage(ctx, sess.Game.UUID, msg.Text)
 			if err != nil {
 				return nil, err
 			}

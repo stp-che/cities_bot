@@ -9,6 +9,7 @@ import (
 	"github.com/stp-che/cities_bot/pkg/log"
 	"github.com/stp-che/cities_bot/service/gateway/telegram"
 	tgmd "github.com/stp-che/cities_bot/service/gateway/telegram/middleware"
+	citiesgamerepo "github.com/stp-che/cities_bot/service/repository/citiesgame"
 	sessrepo "github.com/stp-che/cities_bot/service/repository/session"
 	"github.com/stp-che/cities_bot/service/usecase/citiesgame"
 	"github.com/stp-che/cities_bot/service/usecase/session"
@@ -59,7 +60,11 @@ func (a *App) Init() error {
 		return fmt.Errorf("bot init error: %w", err)
 	}
 
-	a.TgHandler = telegram.NewService([]telegram.GameEngine{citiesgame.NewUsecase()})
+	a.TgHandler = telegram.NewService(
+		[]telegram.GameEngine{
+			citiesgame.NewUsecase(citiesgame.WithGameRepo(citiesgamerepo.NewMemRepo())),
+		},
+	)
 
 	a.addBotHandlers()
 

@@ -135,11 +135,11 @@ func TestServiceDefault(t *testing.T) {
 			},
 		},
 		{
-			title: "when game started",
+			title: "when game continues",
 			msg:   msg("something"),
 			before: func(tc *testCase) {
 				tc.session.StartGame("foo", gameUUID)
-				tc.engines["foo"].EXPECT().ReceiveMessage(gomock.Any(), gameUUID, "something").Return("answer", nil)
+				tc.engines["foo"].EXPECT().ReceiveMessage(gomock.Any(), gameUUID, "something").Return("answer", false, nil)
 			},
 			checks: func(tt require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
 				require.NoError(t, err)
