@@ -69,6 +69,29 @@ func (u *Usecase) ReceiveMessage(ctx context.Context, gameUUID uuid.UUID, messag
 	return resp, game.IsFinished, nil
 }
 
+func (u *Usecase) Yield(ctx context.Context, gameUUID uuid.UUID) (string, bool, error) {
+	game, err := u.gameRepo.Get(ctx, gameUUID)
+	if err != nil {
+		return "", false, err
+	}
+
+	if game == nil {
+		return "", false, common.NewGameNotFoundError(gameName, gameUUID)
+	}
+
+	err = game.PlayerYields()
+	if err != nil {
+		return "", false, err
+	}
+
+	err = u.gameRepo.Save(ctx, game)
+	if err != nil {
+		return "", false, err
+	}
+
+	return game.Result(), game.IsFinished, nil
+}
+
 func (u *Usecase) Quit(ctx context.Context, gameUUID uuid.UUID) (string, error) {
 	err := u.gameRepo.Delete(ctx, gameUUID)
 	if err != nil {

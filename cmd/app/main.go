@@ -84,6 +84,7 @@ func (a *App) addBotHandlers() {
 	}
 
 	a.bot.AddCommandHandler("play", m(a.TgHandler.Play))
+	a.bot.AddCommandHandler("yield", m(a.TgHandler.Yield))
 	a.bot.AddCommandHandler("quit", m(a.TgHandler.Quit))
 
 	a.bot.SetDefaultHandler(m(a.TgHandler.Default))

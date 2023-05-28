@@ -95,3 +95,19 @@ func (mr *MockGameEngineMockRecorder) ReceiveMessage(arg0, arg1, arg2 interface{
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ReceiveMessage", reflect.TypeOf((*MockGameEngine)(nil).ReceiveMessage), arg0, arg1, arg2)
 }
+
+// Yield mocks base method.
+func (m *MockGameEngine) Yield(arg0 context.Context, arg1 uuid.UUID) (string, bool, error) {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "Yield", arg0, arg1)
+	ret0, _ := ret[0].(string)
+	ret1, _ := ret[1].(bool)
+	ret2, _ := ret[2].(error)
+	return ret0, ret1, ret2
+}
+
+// Yield indicates an expected call of Yield.
+func (mr *MockGameEngineMockRecorder) Yield(arg0, arg1 interface{}) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Yield", reflect.TypeOf((*MockGameEngine)(nil).Yield), arg0, arg1)
+}

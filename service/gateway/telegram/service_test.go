@@ -123,6 +123,50 @@ func TestServiceQuit(t *testing.T) {
 	}
 }
 
+func TestServiceYield(t *testing.T) {
+	gameUUID := uuid.New()
+
+	cases := []*testCase{
+		{
+			title: "when there is no game in session",
+			msg:   cmdMsg("/yield"),
+			checks: func(tt require.TestingT, _ *testCase, _ *tgbotapi.MessageConfig, err error) {
+				require.ErrorIs(t, err, ErrGameNotStarted)
+			},
+		},
+		{
+			title: "when game started",
+			msg:   cmdMsg("/yield"),
+			before: func(tc *testCase) {
+				tc.session.StartGame("foo", gameUUID)
+				tc.engines["foo"].EXPECT().Yield(gomock.Any(), gameUUID).Return("answer", true, nil)
+			},
+			checks: func(tt require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "answer", mc.Text)
+			},
+		},
+		{
+			title: "when there is a game with unknown engine in session",
+			msg:   cmdMsg("/yield"),
+			before: func(tc *testCase) {
+				tc.session.StartGame("bar", gameUUID)
+			},
+			checks: func(tt require.TestingT, _ *testCase, _ *tgbotapi.MessageConfig, err error) {
+				require.ErrorIs(t, err, ErrGameNotStarted)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.title, func(t *testing.T) {
+			tc.run(t, func(s *Service) bot.HandlerFunc {
+				return s.Yield
+			})
+		})
+	}
+}
+
 func TestServiceDefault(t *testing.T) {
 	gameUUID := uuid.New()
 

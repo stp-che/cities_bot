@@ -12,5 +12,6 @@ type GameEngine interface {
 	Name() string
 	Play(context.Context) (*uuid.UUID, string, error)
 	ReceiveMessage(context.Context, uuid.UUID, string) (string, bool, error)
+	Yield(context.Context, uuid.UUID) (string, bool, error)
 	Quit(context.Context, uuid.UUID) (string, error)
 }

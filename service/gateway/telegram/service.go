@@ -80,6 +80,21 @@ func (s *Service) Quit(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 	)
 }
 
+func (s *Service) Yield(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
+	return s.withCurrentGame(ctx,
+		func(sess *esession.Session, engine GameEngine, gameUUID uuid.UUID) (*tgbotapi.MessageConfig, error) {
+			res, _, err := engine.Yield(ctx, sess.Game.UUID)
+			if err != nil {
+				return nil, err
+			}
+
+			resp := tgbotapi.NewMessage(msg.Chat.ID, res)
+
+			return &resp, nil
+		},
+	)
+}
+
 func (s *Service) withCurrentGame(
 	ctx context.Context, handle func(*esession.Session, GameEngine, uuid.UUID) (*tgbotapi.MessageConfig, error),
 ) (*tgbotapi.MessageConfig, error) {

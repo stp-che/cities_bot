@@ -163,6 +163,75 @@ func TestUsecaseReceiveMessage(t *testing.T) {
 	}
 }
 
+func TestUsecaseYield(t *testing.T) {
+	type testCase struct {
+		title  string
+		before func(*testCase)
+		check  func(require.TestingT, string, bool, error)
+
+		gameRepo *mocks.MockRepository
+	}
+
+	whateverError := errors.New("whatever")
+	gameUUID := uuid.New()
+
+	cases := []*testCase{
+		{
+			title: "when no error happened and game finishes",
+			before: func(tc *testCase) {
+				tc.gameRepo.EXPECT().Get(gomock.Any(), gameUUID).Return(testGame([]string{}), nil)
+				tc.gameRepo.EXPECT().Save(gomock.Any(), gomock.Any()).Return(nil)
+			},
+			check: func(t require.TestingT, res string, isFinished bool, err error) {
+				require.NoError(t, err)
+				require.NotZero(t, res)
+				require.True(t, isFinished)
+			},
+		},
+		{
+			title: "when game repo returns error",
+			before: func(tc *testCase) {
+				tc.gameRepo.EXPECT().Get(gomock.Any(), gameUUID).Return(testGame([]string{}), nil)
+				tc.gameRepo.EXPECT().Save(gomock.Any(), gomock.Any()).Return(whateverError)
+			},
+			check: func(t require.TestingT, _ string, _ bool, err error) {
+				require.ErrorIs(t, err, whateverError)
+			},
+		},
+		{
+			title: "when game does not exist",
+			before: func(tc *testCase) {
+				tc.gameRepo.EXPECT().Get(gomock.Any(), gameUUID).Return(nil, nil)
+			},
+			check: func(t require.TestingT, _ string, _ bool, err error) {
+				notFoundErr := &common.GameNotFoundError{}
+				require.ErrorAs(t, err, &notFoundErr)
+				require.Equal(t, common.NewGameNotFoundError(gameName, gameUUID), notFoundErr)
+			},
+		},
+	}
+
+	for _, tc := range cases {
+		t.Run(tc.title, func(t *testing.T) {
+			ctrl := gomock.NewController(t)
+			tc.gameRepo = mocks.NewMockRepository(ctrl)
+
+			if tc.before != nil {
+				tc.before(tc)
+			}
+
+			ctx := context.Background()
+
+			u := NewUsecase(WithGameRepo(tc.gameRepo))
+			res, isFinished, err := u.Yield(ctx, gameUUID)
+
+			if tc.check != nil {
+				tc.check(t, res, isFinished, err)
+			}
+		})
+	}
+}
+
 func testGame(cities []string) *citiesgame.Game {
 	citiesPool := citiesgame.NewCitiesPool(cities)
 	return citiesgame.New(citiesPool)
