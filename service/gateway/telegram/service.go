@@ -32,7 +32,7 @@ func (s *Service) Play(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 		return nil, err
 	}
 
-	if sess.Game != nil {
+	if sess.Game != nil && !sess.Game.IsFinished {
 		return nil, ErrGameAlreadyStarted
 	}
 
@@ -51,10 +51,12 @@ func (s *Service) Play(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 func (s *Service) Default(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
 	return s.withCurrentGame(ctx,
 		func(sess *esession.Session, engine GameEngine, gameUUID uuid.UUID) (*tgbotapi.MessageConfig, error) {
-			res, _, err := engine.ReceiveMessage(ctx, sess.Game.UUID, msg.Text)
+			res, gameFinished, err := engine.ReceiveMessage(ctx, sess.Game.UUID, msg.Text)
 			if err != nil {
 				return nil, err
 			}
+
+			sess.Game.IsFinished = gameFinished
 
 			resp := tgbotapi.NewMessage(msg.Chat.ID, res)
 
@@ -83,10 +85,12 @@ func (s *Service) Quit(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.Me
 func (s *Service) Yield(ctx context.Context, msg *tgbotapi.Message) (*tgbotapi.MessageConfig, error) {
 	return s.withCurrentGame(ctx,
 		func(sess *esession.Session, engine GameEngine, gameUUID uuid.UUID) (*tgbotapi.MessageConfig, error) {
-			res, _, err := engine.Yield(ctx, sess.Game.UUID)
+			res, gameFinished, err := engine.Yield(ctx, sess.Game.UUID)
 			if err != nil {
 				return nil, err
 			}
+
+			sess.Game.IsFinished = gameFinished
 
 			resp := tgbotapi.NewMessage(msg.Chat.ID, res)
 

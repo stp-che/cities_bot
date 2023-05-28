@@ -6,12 +6,13 @@ import (
 
 type Session struct {
 	ChatID int64
-	Game   *Game `json:"game"`
+	Game   *Game
 }
 
 type Game struct {
-	Name string    `json:"name"`
-	UUID uuid.UUID `json:"uuid"`
+	Name       string
+	UUID       uuid.UUID
+	IsFinished bool
 }
 
 func New(chatID int64) *Session {

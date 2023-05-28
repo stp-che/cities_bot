@@ -40,13 +40,27 @@ func TestServicePlay(t *testing.T) {
 			},
 		},
 		{
-			title: "when there is current game in session",
+			title: "when there is current unfinished game in session",
 			msg:   cmdMsg("/play", "foo"),
 			before: func(tc *testCase) {
 				tc.session.StartGame("foo", uuid.New())
 			},
 			checks: func(t require.TestingT, _ *testCase, mc *tgbotapi.MessageConfig, err error) {
 				require.ErrorIs(t, err, ErrGameAlreadyStarted)
+			},
+		},
+		{
+			title: "when there is finished game in session",
+			msg:   cmdMsg("/play", "foo"),
+			before: func(tc *testCase) {
+				tc.session.StartGame("foo", uuid.New())
+				tc.session.Game.IsFinished = true
+				tc.engines["foo"].EXPECT().Play(gomock.Any()).Return(&gameUUID, "answer", nil)
+			},
+			checks: func(t require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "answer", mc.Text)
+				require.Equal(t, &esession.Game{Name: "foo", UUID: gameUUID}, tc.session.Game)
 			},
 		},
 		{
@@ -144,6 +158,7 @@ func TestServiceYield(t *testing.T) {
 			checks: func(tt require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "answer", mc.Text)
+				require.True(t, tc.session.Game.IsFinished)
 			},
 		},
 		{
@@ -188,6 +203,20 @@ func TestServiceDefault(t *testing.T) {
 			checks: func(tt require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
 				require.NoError(t, err)
 				require.Equal(t, "answer", mc.Text)
+				require.False(t, tc.session.Game.IsFinished)
+			},
+		},
+		{
+			title: "when game finishes",
+			msg:   msg("something"),
+			before: func(tc *testCase) {
+				tc.session.StartGame("foo", gameUUID)
+				tc.engines["foo"].EXPECT().ReceiveMessage(gomock.Any(), gameUUID, "something").Return("answer", true, nil)
+			},
+			checks: func(tt require.TestingT, tc *testCase, mc *tgbotapi.MessageConfig, err error) {
+				require.NoError(t, err)
+				require.Equal(t, "answer", mc.Text)
+				require.True(t, tc.session.Game.IsFinished)
 			},
 		},
 		{
